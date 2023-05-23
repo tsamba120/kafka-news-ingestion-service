@@ -1,7 +1,8 @@
 
 spring:
   kafka:
-    bootstrap-servers: localhost:9092,localhost:9093,localhost:9094
+    bootstrap-servers: broker0:29092,broker1:29093,broker2:29094 # use for connecting to container
+#    bootstrap-servers: localhost:9092,localhost:9093,localhost:9094 # use for local dev
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer

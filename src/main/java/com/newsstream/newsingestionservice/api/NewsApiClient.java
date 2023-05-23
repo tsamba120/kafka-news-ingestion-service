@@ -32,14 +32,19 @@ public class NewsApiClient {
     private final String baseURL;
 
     URL url;
-    HttpURLConnection con;
+    public HttpURLConnection con;
     Map<String, String> requestParameters;
+
+    int currentResponseStatus;
 
     @Autowired
     public NewsApiClient(ApiConfig apiConfig) throws IOException {
         this.requestParameters = null;
         this.apiKey = apiConfig.getApiKey();
         this.baseURL = apiConfig.getApiUrl();
+        logger.debug("API CONFIG:");
+        logger.debug("API_KEY: " + this.apiKey);
+        logger.debug("API_URL: " + this.baseURL);
     }
 
     public void setConnection() throws IOException {
@@ -90,16 +95,32 @@ public class NewsApiClient {
         this.setApiKey(apiKey);
         this.setGetRequest();
         int status = con.getResponseCode();
+        this.currentResponseStatus = status;
         return status;
     }
 
     public JsonNode readJsonResponse() throws IOException {
-        BufferedReader in = new BufferedReader(
+
+        BufferedReader in = null;
+        if (this.currentResponseStatus >= 200 && this.currentResponseStatus < 300) {
+            in = new BufferedReader(
                 new InputStreamReader(con.getInputStream())
-        );
+            );
+        } else if (this.currentResponseStatus >= 400 && this.currentResponseStatus < 500) {
+            in = new BufferedReader(
+                new InputStreamReader(con.getErrorStream())
+            );
+        } else if (this.currentResponseStatus >= 500 && this.currentResponseStatus < 600) {
+            in = new BufferedReader(
+                new InputStreamReader(con.getErrorStream())
+            );
+        }
+
         ObjectMapper mapper = new ObjectMapper();
         JsonNode node = mapper.readTree(in);
-        in.close();
+        if (in != null) {
+            in.close();
+        }
 
         return node;
     }

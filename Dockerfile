@@ -1,4 +1,4 @@
-FROM openjdk:11
+FROM eclipse-temurin:11
 EXPOSE 8080
 ARG JAR_FILE
 ADD ${JAR_FILE} app.jar

@@ -50,16 +50,19 @@ public class NewsStreamingService {
         try {
             int httpStatus = newsClient.executeGetRequest();
 
+            response = newsClient.readJsonResponse();
+
             if (httpStatus >= 200 && httpStatus < 300) {
                 logger.info("Successful API Request");
             } else if (httpStatus >=400 && httpStatus < 500) {
-                logger.error("Failed API Request: HTTP:400 client error");
+                logger.error("Failed API Request: HTTP:" + httpStatus +" client error");
+                logger.error(response.toString());
                 return;
             } else if (httpStatus >=500 && httpStatus <6500) {
-                logger.error("Failed API Request: HTTP:500 server error");
+                logger.error("Failed API Request: HTTP:" + httpStatus +" server error");
+                logger.error(response.toString());
                 return;
             }
-            response = newsClient.readJsonResponse();
 
         } catch (IOException e) {
             logger.error(e.toString());
@@ -90,7 +93,6 @@ public class NewsStreamingService {
         for (JsonNode article : articles) {
 
             Article articleValue = new Article(article);
-//            logger.info(articleValue.toString());
 
             ListenableFuture<SendResult<String, Article>> future = kafkaProducerTemplate.send(
                     newsTopic,
@@ -101,12 +103,12 @@ public class NewsStreamingService {
             future.addCallback(
                     result -> {
                         assert result != null;
-                        logger.info("Published article=" + articleValue
+                        logger.info("Published article=" + articleValue.getTitle()
                                 + ",\n  partition=" + result.getRecordMetadata().partition()
                                 + ",\n offset=" + result.getRecordMetadata().offset());
                     },
                     ex -> {
-                        logger.error("Failed to publish " + articleValue, ex);
+                        logger.error("Failed to publish " + articleValue.getTitle(), ex);
                     }
             );
         }
